@@ -24,6 +24,15 @@ pipeline {
             }
         }
 
+        stage('Compilation des assets') {
+            steps {
+                dir("${DEPLOY_DIR}/${PROJECT_SUBFOLDER}") {
+                    sh 'npm install'
+                    sh 'npm run build'
+                }
+            }
+        }
+
         stage('Configuration de l\'environnement') {
             steps {
                 script {
