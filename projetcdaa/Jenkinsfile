@@ -5,19 +5,20 @@ pipeline {
         GIT_REPO = "https://github.com/Benihaut/d-ploiement.git"
         GIT_BRANCH = "main"
         DEPLOY_DIR = "web003"
+        PROJECT_SUBFOLDER = "projetcdaa"
     }
 
     stages {
         stage('Cloner le dépôt') {
             steps {
-                sh "rm -rf ${DEPLOY_DIR}" // Nettoyage du précédent build
+                sh "rm -rf ${DEPLOY_DIR}"
                 sh "git clone -b ${GIT_BRANCH} ${GIT_REPO} ${DEPLOY_DIR}"
             }
         }
 
         stage('Installation des dépendances') {
             steps {
-                dir("${DEPLOY_DIR}") {
+                dir("${DEPLOY_DIR}/${PROJECT_SUBFOLDER}") {
                     sh 'composer install --optimize-autoloader'
                 }
             }
@@ -32,14 +33,14 @@ pipeline {
                     DATABASE_URL=mysql://root:routitop@127.0.0.1:3306/${DEPLOY_DIR}?serverVersion=8.3.0&charset=utf8mb4
                     """.stripIndent()
 
-                    writeFile file: "${DEPLOY_DIR}/.env.local", text: envLocal
+                    writeFile file: "${DEPLOY_DIR}/${PROJECT_SUBFOLDER}/.env.local", text: envLocal
                 }
             }
         }
 
         stage('Migration de la base de données') {
             steps {
-                dir("${DEPLOY_DIR}") {
+                dir("${DEPLOY_DIR}/${PROJECT_SUBFOLDER}") {
                     sh 'php bin/console doctrine:database:create --if-not-exists --env=prod'
                     sh 'php bin/console doctrine:migrations:migrate --no-interaction --env=prod'
                 }
@@ -48,7 +49,7 @@ pipeline {
 
         stage('Nettoyage du cache') {
             steps {
-                dir("${DEPLOY_DIR}") {
+                dir("${DEPLOY_DIR}/${PROJECT_SUBFOLDER}") {
                     sh 'php bin/console cache:clear --env=prod'
                     sh 'php bin/console cache:warmup'
                 }
@@ -57,9 +58,9 @@ pipeline {
 
         stage('Déploiement') {
             steps {
-                sh "rm -rf /var/www/html/${DEPLOY_DIR}" // Supprime le dossier de destination
-                sh "mkdir /var/www/html/${DEPLOY_DIR}" // Recréé le dossier de destination
-                sh "cp -rT ${DEPLOY_DIR} /var/www/html/${DEPLOY_DIR}"
+                sh "rm -rf /var/www/html/${DEPLOY_DIR}"
+                sh "mkdir -p /var/www/html/${DEPLOY_DIR}"
+                sh "cp -rT ${DEPLOY_DIR}/${PROJECT_SUBFOLDER} /var/www/html/${DEPLOY_DIR}"
                 sh "chmod -R 775 /var/www/html/${DEPLOY_DIR}/var"
             }
         }
