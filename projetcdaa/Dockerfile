@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
     zip \
     libzip-dev \
     nginx \
+    curl \
     && docker-php-ext-install intl pdo pdo_mysql zip
 
 # Copie de Composer
@@ -19,6 +20,20 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 # Installation de Symfony CLI
 RUN curl -sS https://get.symfony.com/cli/installer | bash
 RUN mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
+
+# Installation de NVM et Node.js
+ENV NODE_VERSION=20.0.0
+ENV NVM_DIR=/root/.nvm
+
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash && \
+    . "$NVM_DIR/nvm.sh" && \
+    nvm install ${NODE_VERSION} && \
+    nvm alias default v${NODE_VERSION} && \
+    ln -s "$NVM_DIR/versions/node/v${NODE_VERSION}/bin/node" /usr/local/bin/node && \
+    ln -s "$NVM_DIR/versions/node/v${NODE_VERSION}/bin/npm" /usr/local/bin/npm
+
+# Ajout de Node.js et npm au PATH
+ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin:${PATH}"
 
 WORKDIR /var/www/symfony
 
@@ -46,4 +61,3 @@ RUN mkdir -p /var/www/symfony/var/log
 RUN chown -R www-data:www-data /var/www/symfony/var
 
 CMD ["/start.sh"]
-

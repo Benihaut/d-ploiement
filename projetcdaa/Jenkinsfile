@@ -24,15 +24,6 @@ pipeline {
             }
         }
 
-        stage('Compilation des assets') {
-            steps {
-                dir("${DEPLOY_DIR}/${PROJECT_SUBFOLDER}") {
-                    sh 'npm install'
-                    sh 'npm run build'
-                }
-            }
-        }
-
         stage('Configuration de l\'environnement') {
             steps {
                 script {
@@ -40,8 +31,7 @@ pipeline {
                     APP_ENV=prod
                     APP_DEBUG=1
                     DATABASE_URL=mysql://root:routitop@127.0.0.1:3306/${DEPLOY_DIR}?serverVersion=8.3.0&charset=utf8mb4
-                    """.stripIndent()
-
+                    """
                     writeFile file: "${DEPLOY_DIR}/${PROJECT_SUBFOLDER}/.env.local", text: envLocal
                 }
             }
