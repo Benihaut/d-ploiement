@@ -13,13 +13,20 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 
 #[Route('/article')]
 final class ArticleController extends AbstractController
 {
     #[Route(name: 'app_article_index', methods: ['GET'])]
-    public function index(Request $request, ArticleRepository $articleRepository): Response
+    public function index(Request $request, ArticleRepository $articleRepository, Security $security): Response
     {
+        if (!$security->isGranted('ROLE_USER')) {
+            $this->addFlash('error', 'Veuillez vous connecter pour accéder à cette page.');
+            return $this->redirectToRoute('app_login');
+        }
+
         $query = $request->query->get('q');
         
         if ($query) {

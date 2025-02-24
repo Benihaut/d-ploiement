@@ -10,20 +10,32 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Bundle\SecurityBundle\Security;
 
 #[Route('/category')]
 final class CategoryController extends AbstractController
 {
     #[Route(name: 'app_category_index', methods: ['GET'])]
-    public function index(CategoryRepository $categoryRepository): Response
+    public function index(CategoryRepository $categoryRepository, Security $security): Response
     {
+        if (!$security->isGranted('ROLE_USER')) {
+            $this->addFlash('error', 'Veuillez vous connecter pour accéder à cette page.');
+            return $this->redirectToRoute('app_login');
+        }
+
         return $this->render('category/index.html.twig', [
             'categories' => $categoryRepository->findAll(),
         ]);
     }
+
     #[Route('/{id}/articles', name: 'app_category_articles', methods: ['GET'])]
-    public function showArticles(Category $category): Response
+    public function showArticles(Category $category, Security $security): Response
     {
+        if (!$security->isGranted('ROLE_USER')) {
+            $this->addFlash('error', 'Veuillez vous connecter pour accéder à cette page.');
+            return $this->redirectToRoute('app_login');
+        }
+
         return $this->render('category/articles.html.twig', [
             'category' => $category,
             'articles' => $category->getArticles(),
